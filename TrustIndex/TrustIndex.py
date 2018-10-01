@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+import sqlalchemy
 
 #ABI for smart contract
 import contract_abi
@@ -50,12 +51,12 @@ def InitialRemoveRecords(RecordList, UpdateIDList):
 	chainHash = {}
 	timestampHash = {}
 	tempList = list(RecordList)
-	for x in range(len(RecordList)):
-		if RecordList[x].txid in UpdateIDList:
-			if(RecordList[x].updateid != defaultUID):
-				highestChain, oldest = UpdateIDs(RecordList[x].txid, RecordList[x].updateid, RecordList[x].chain, tempList)
-				chainHash[RecordsList[x].updateid] = highestChain
-				timestampHash[RecordList[x].updateid] = oldest
+	for x, record in enumerate(RecordList):
+		if record.txid in UpdateIDList:
+			if(record.updateid != defaultUID):
+				highestChain, oldest = UpdateIDs(record.txid, record.updateid, record.chain, tempList)
+				chainHash[record.updateid] = highestChain
+				timestampHash[record.updateid] = oldest
 			tempList.pop(x - offset)
 			offset = offset + 1
 	return tempList, chainHash, timestampHash
@@ -63,8 +64,8 @@ def InitialRemoveRecords(RecordList, UpdateIDList):
 def RemoveConditionalRecords(RecordList, chainHash, timestampHash):
 	offset = 0
 	tempList = list(RecordList)
-	for x in range(len(RecordList)):
-		if RecordList[x].updateid != defaultUID and (chainHash[RecordList[x].updateid] > RecordList[x].chain or timestampHash[RecordList[x].updateid] > RecordList[x].timestamp):
+	for x, record in enumerate(RecordList):
+		if record.updateid != defaultUID and (chainHash[record.updateid] > record.chain or timestampHash[record.updateid] > record.timestamp):
 			tempList.pop(x - offset)
 			offset = offset + 1
 	return tempList
@@ -72,12 +73,12 @@ def RemoveConditionalRecords(RecordList, chainHash, timestampHash):
 def UpdateIDs(oldUID, newUID, chain, RecordList):
 	highestChain = -1
 	oldest = -1
-	for y in range(len(RecordList)):
-		if RecordList[y].updateid == oldUID:
-			RecordList[y].updateid = newUID
-			RecordList[y].chain = chain + 1
-			highestChain = RecordList[y].chain if RecordList[y].chain > highestChain else highestChain
-			oldest = RecordList[y].timestamp if RecordList[y].timestamp > oldest else oldest
+	for record in RecordList:
+		if record.updateid == oldUID:
+			record.updateid = newUID
+			record.chain = chain + 1
+			highestChain = record.chain if record.chain > highestChain else highestChain
+			oldest = record.timestamp if record.timestamp > oldest else oldest
 	return highestChain, oldest
 
 
@@ -99,8 +100,7 @@ def PageRank(G, d = 0.85, epsilon = 1.0e-8):
 	Ones = np.array([[1.0 for x in range(N)] for y in range(N)])
 	v = np.array([1/N for x in range(N)])
 
-	for node in PRList:
-		nodeIndex = PRList.index(node)
+	for nodeIndex, node in enumerate(PRList):
 		inDegreeList = InDegreeList(G, PRList, node)
 		for indegree in inDegreeList:
 			indegreeIndex = PRList.index(indegree)
@@ -120,7 +120,7 @@ def PageRank(G, d = 0.85, epsilon = 1.0e-8):
 w3 = Web3(HTTPProvider("https://ropsten.infura.io/v3/e3edb56114244a31b698dd92dc7cfcf7", request_kwargs={'timeout': 60}))
 
 contract = w3.eth.contract(
-    address = "0x49E8410Bf14C42398e16A91bF75d2e930893B447",
+    address = "0xD946eddE77A7486321D9445EC78f7b1ea0B9EA53",
     abi = contract_abi.abi
 )
 
@@ -142,12 +142,46 @@ G = initGraph(RecordList)
 
 PRv, PRList = PageRank(G)
 
-print(PRv)
+rankHash = {}
+for i, rank in enumerate(PRv):
+	rankHash[PRList[i]] = rank
+
+sorted_items = sorted(rankHash.items(), key=lambda x: x[1])
 
 sum1 = 0
 for x in range(len(PRv)):
 	sum1 = sum1 + PRv[x]
 print(sum1)
+
+
+def SaveRanks(sortedRankHash):
+	con, meta = connect('main2', 'test1234', 'pagerankdb')
+
+	clean_ranks = "DELETE FROM rank"
+	query = con.execute(clean_ranks)
+
+	for count, key in enumerate(rankHash):
+		statement = "INSERT INTO rank (pub_key, rank) VALUES ('%s', %d)" % (key, (count + 1))
+		count = count + 1
+		query = con.execute(statement)
+
+
+def connect(user, password, db, host='178.128.43.198', port=5432):
+    '''Returns a connection and a metadata object'''
+    # We connect with the help of the PostgreSQL URL
+    # postgresql://federer:grandestslam@localhost:5432/tennis
+    url = 'postgresql://{}:{}@{}:{}/{}'
+    url = url.format(user, password, host, port, db)
+
+    # The return value of create_engine() is our connection object
+    con = sqlalchemy.create_engine(url, client_encoding='utf8')
+
+    # We then bind the connection to MetaData()
+    meta = sqlalchemy.MetaData(bind=con, reflect=True)
+
+    return con, meta
+
+SaveRanks(sorted_items)
 
 nx.draw(G, with_labels=True)
 plt.show()

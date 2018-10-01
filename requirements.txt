@@ -1,0 +1,6 @@
+flask>=1.0.2
+sqlalchemy>=1.2.12
+json
+flask_restful>=0.3.6
+jsonify>=0.5
+psycopg2-binary>=2.7.2
