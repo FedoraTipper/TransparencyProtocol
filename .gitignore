@@ -273,3 +273,5 @@ TSWLatexianTemp*
 
 # standalone packages
 *.sta
+
+./TrustIndex/__pycache__
