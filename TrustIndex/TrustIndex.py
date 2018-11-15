@@ -9,6 +9,21 @@ from web3 import Web3, HTTPProvider
 
 defaultUID = '0000000000000000000000000000000000000000000000000000000000000000'
 
+"""
+
+Description:
+Record class adds the ability to create objects of each record that has been recorded 
+on the smart contract
+
+Inputs:
+Initialisation takes all input fields that has been specified in documentation as well as 
+an extra variable for chain length
+
+Outputs:
+Creates record object or returns string of fields and it's corresponding variables
+
+"""
+
 class Record:
 	def __init__(self, timestamp, txid, source, destination, updateid, payload, chain):
 		self.timestamp = timestamp
@@ -22,7 +37,22 @@ class Record:
 	def toString(self):
 		return("Timestamp: {0} - TXID: {1} - Source: {2} Destination: {3} - Updateid: {4} - Payload: {5} - Chain: {6}".format(self.timestamp, self.txid, self.source, self.destination, self.updateid, self.payload, self.chain))
 
-def PopulateRecordList(IDList):
+"""
+
+Description:
+This function will populate all record objects recorded on the smart contract and store it into
+a list which is of type <Record>.
+
+Inputs:
+The function requires the list of all the Record IDs given by the smart contract
+
+Outputs:
+Returns two lists, one is all objects returned from the smart contract and the other list of all the record IDs 
+that have updated transaction
+
+"""
+
+def PopulateRecordList(IDList, contract):
 	RecordList = list()
 	UpdateIDList = list()
 	#Load all records
@@ -31,14 +61,23 @@ def PopulateRecordList(IDList):
 		record = Record(result[0], txid, result[1], result[2], result[3], result[4], 0)
 		RecordList.append(record)
 		if result[3].hex() != defaultUID:
-			UpdateIDList.append(result[3].hex())
+			if (result[3].hex() not in UpdateIDList):
+				UpdateIDList.append(result[3].hex())
 	return (RecordList, UpdateIDList)
 
-def initGraph(RecordList):
-	G = nx.DiGraph()
-	for record in RecordList:
-		G.add_edge(str(record.source), str(record.destination))
-	return G
+
+"""
+
+Description:
+Removes all old records that have been updated
+
+Inputs:
+Record list, List of all record ids that have been updated
+
+Outputs:
+Returns a list of record objects with all updated objects removed 
+
+"""
 
 def RemoveOldRecords(RecordList, UpdateIDList):
 	RecordList, chainHash, timestampHash = InitialRemoveRecords(RecordList, UpdateIDList)
@@ -46,10 +85,7 @@ def RemoveOldRecords(RecordList, UpdateIDList):
 		RecordList = RemoveConditionalRecords(RecordList, chainHash, timestampHash)
 	return RecordList
 
-def InitialRemoveRecords(RecordList, UpdateIDList):
-	offset = 0
-	chainHash = {}
-	timestampHash = {}
+def InitialRemoveRecords(RecordList, UpdateIDList, chainHash = {}, timestampHash = {}, offset = 0):
 	tempList = list(RecordList)
 	for x, record in enumerate(RecordList):
 		if record.txid in UpdateIDList:
@@ -61,8 +97,7 @@ def InitialRemoveRecords(RecordList, UpdateIDList):
 			offset = offset + 1
 	return tempList, chainHash, timestampHash
 
-def RemoveConditionalRecords(RecordList, chainHash, timestampHash):
-	offset = 0
+def RemoveConditionalRecords(RecordList, chainHash, timestampHash, offset = 0):
 	tempList = list(RecordList)
 	for x, record in enumerate(RecordList):
 		if record.updateid != defaultUID and (chainHash[record.updateid] > record.chain or timestampHash[record.updateid] > record.timestamp):
@@ -81,6 +116,48 @@ def UpdateIDs(oldUID, newUID, chain, RecordList):
 			oldest = record.timestamp if record.timestamp > oldest else oldest
 	return highestChain, oldest
 
+
+"""
+
+Description:
+Initalises and populates a networkx directed graph
+
+Inputs:
+List of all records (after updated transactions removed)
+
+Outputs:
+Returns directed graph object with all nodes populated
+
+"""
+
+def initGraph(RecordList):
+	G = nx.DiGraph()
+	for record in RecordList:
+		G.add_edge(str(record.source), str(record.destination))
+	return G
+
+def initAntiTrustGraph(RecordList, PayloadID, AuthorityNodeList):
+	markedNodes = list()
+	G = nx.DiGraph()
+	for record in RecordList:
+		if str(record.payload) == PayloadID and str(record.source.lower()) in AuthorityNodeList:
+			markedNodes.append(str(record.destination))
+		else:
+			G.add_edge(str(record.source), str(record.destination))	
+	return G, markedNodes
+
+"""
+
+Description:
+This function will return all in degrees 
+
+Inputs:
+Populated directed graph object, List of all page ranked nodes, target node public address
+
+Outputs:
+Returns a list of all indegrees of a target node
+
+"""
 
 def InDegreeList(G,	PRList, keyNode):
 	inDegreeList = list()
@@ -110,78 +187,66 @@ def PageRank(G, d = 0.85, epsilon = 1.0e-8):
 	M_hat = (d * M) + (((1-d)/N) * Ones)
 	last_v = Ones[0]
 
+	#Normalise ranks until error limit is reached
 	while np.linalg.norm(v - last_v, 2) > epsilon:
 		last_v = v
 		v = np.matmul(M_hat, v)
 
-	return (v, PRList)
+	rankHash = {}
+	for i, rank in enumerate(v):
+		rankHash[PRList[i]] = rank	
 
-# web3.py instance
-w3 = Web3(HTTPProvider("https://ropsten.infura.io/v3/e3edb56114244a31b698dd92dc7cfcf7", request_kwargs={'timeout': 60}))
+	return rankHash
 
-contract = w3.eth.contract(
-    address = "0xD946eddE77A7486321D9445EC78f7b1ea0B9EA53",
-    abi = contract_abi.abi
-)
+def AntiTrustRank(G, SeedSet, decay = 0.55):
+	PRList = list(G.nodes())
+	N = G.number_of_nodes()
 
-#Display the default greeting from the contract
-IDList = contract.functions.getRecordIDs().call()
+	#Generate Binary webgraph matrix
+	binMatrix = nx.to_numpy_matrix(G)
+	T = binMatrix.transpose()
+	TArray = np.squeeze(np.asarray(T))
 
-RecordList, UpdateIDList = PopulateRecordList(IDList)
+	A = np.array([[0.0 for x in range(N)] for y in range(N)])
 
-for x in RecordList:
-	print(x.toString())
+	for i in range(N):
+		for j in range(N):
+			A[i][j] = decay * TArray[i][j] + ((1-decay)/len(SeedSet)) if connects_to_seedset(G.neighbors(PRList[i]), SeedSet) else decay * TArray[i][j]
 
-RecordList = RemoveOldRecords(RecordList, UpdateIDList)
+	antiRankHash = {}
+	for index, i in enumerate(A):
+		temp = 0
+		for j in i:
+			temp = temp + j
+		antiRankHash[PRList[index]] = temp
 
-print("						")
-for x in RecordList:
-	print(x.toString())
+	return antiRankHash
 
-G = initGraph(RecordList)
+def connects_to_seedset(neighbors, SeedSet):
+	for node in neighbors:
+		if node in SeedSet: return True
+	return False 
 
-PRv, PRList = PageRank(G)
-
-rankHash = {}
-for i, rank in enumerate(PRv):
-	rankHash[PRList[i]] = rank
-
-sorted_items = sorted(rankHash.items(), key=lambda x: x[1])
-
-sum1 = 0
-for x in range(len(PRv)):
-	sum1 = sum1 + PRv[x]
-print(sum1)
-
-
-def SaveRanks(sortedRankHash):
-	con, meta = connect('main2', 'test1234', 'pagerankdb')
+def SaveRanks(rankList, ATR):
+	con = connect('main2', 'test1234', '178.128.43.198', '5432', 'pagerankdb')
 
 	clean_ranks = "DELETE FROM rank"
 	query = con.execute(clean_ranks)
 
-	for count, key in enumerate(rankHash):
-		statement = "INSERT INTO rank (pub_key, rank) VALUES ('%s', %d)" % (key, (count + 1))
-		count = count + 1
-		query = con.execute(statement)
+	if ATR == 0:
+		for count, key in enumerate(rankList):
+			statement = "INSERT INTO rank (pub_key, rank) VALUES ('%s', %d)" % (key[0], (count + 1))
+			query = con.execute(statement)
+	else:
+		for i in range(len(rankList)):
+			statement = "INSERT INTO rank (pub_key, rank, at_rank, seedset) VALUES ('%s', %d, %d, %d)" % (rankList[i][0], (i + 1), rankList[i][2], rankList[i][3])
+			query = con.execute(statement)
+
+	#Close connection with database
+	con.dispose()
 
 
-def connect(user, password, db, host='178.128.43.198', port=5432):
-    '''Returns a connection and a metadata object'''
-    # We connect with the help of the PostgreSQL URL
-    # postgresql://federer:grandestslam@localhost:5432/tennis
-    url = 'postgresql://{}:{}@{}:{}/{}'
-    url = url.format(user, password, host, port, db)
-
-    # The return value of create_engine() is our connection object
-    con = sqlalchemy.create_engine(url, client_encoding='utf8')
-
-    # We then bind the connection to MetaData()
-    meta = sqlalchemy.MetaData(bind=con, reflect=True)
-
-    return con, meta
-
-SaveRanks(sorted_items)
-
-nx.draw(G, with_labels=True)
-plt.show()
+def connect(username, password, ip, port, dbName):
+	url = "postgresql://%s:%s@%s:%s/%s" % (username, password, ip, port, dbName)
+	con = sqlalchemy.create_engine(url)
+	return con
