@@ -89,10 +89,15 @@ def InitialRemoveRecords(RecordList, UpdateIDList, chainHash = {}, timestampHash
 	tempList = list(RecordList)
 	for x, record in enumerate(RecordList):
 		if record.txid in UpdateIDList:
+			condition = False
 			if(record.updateid != defaultUID):
 				highestChain, oldest = UpdateIDs(record.txid, record.updateid, record.chain, tempList)
 				chainHash[record.updateid] = highestChain
 				timestampHash[record.updateid] = oldest
+				condition = True
+			if condition == False: 
+				chainHash[record.txid] = record.chain 
+				timestampHash[record.txid] = record.timestamp
 			tempList.pop(x - offset)
 			offset = offset + 1
 	return tempList, chainHash, timestampHash

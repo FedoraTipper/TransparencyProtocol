@@ -21,7 +21,7 @@ contract Record {
         // Entities aren't able to create a record about themselves.
         // Entities may not update previous records which they did not make
         // Require will validate this constraint, if constraint is true then the contract will refund all ether (that is not spent) back to the entity who made the transaction. And stop any further operations
-        require(destination != msg.sender && (updateid == 0x00 || records[updateid].sender == msg.sender));
+        require(destination != msg.sender && (updateid == 0x00 || records[updateid].source == msg.sender));
         // We create an unique ID in a form of 32 bytes. Since EVM does not house any PRNG algorithms. We need to create one for ourselves.
         // Encode everything together, since keccak only takes single byte data
         bytes32 txid = keccak256(abi.encodePacked(msg.sender, destination, block.difficulty, msg.data, nonce++));
