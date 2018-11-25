@@ -1,0 +1,113 @@
+<script language="javascript" type="text/javascript" src="web3.min.js"></script>
+<script language="javascript" type="text/javascript" src="functions.js"></script>
+<link rel="stylesheet" href="bootstrap.css">
+
+
+
+<body onload="displayRecordIDs()">
+<div class="container-fluid justify-content-center mt-5">
+<div class="row">
+<div class="col-lg xr-100">
+<div class="card text-center" style="width: 40rem;">
+<div class="card-header">
+	<h3>Record List</h3>
+</div>
+<div class="pre-scrollable">
+<ul id="TXList" class="list-group list-group-flush"></ul>
+</div>
+<a href="#" class="btn btn-primary" onclick="displayRecordIDs()">Refresh List</a>
+</div>
+</div>
+
+
+<div class="col-lg">
+<div class="card text-center" style="width: 60rem;">
+<div class="card-header">
+	<h3>Record Information</h3>
+</div>
+<div id="recordDiv">
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Timestamp:</span>
+		</div>
+		<input type="text" id="timestampField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly="" size="12"><br>
+	</div>
+
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Source:</span>
+		</div>
+		<input type="text" id="srcField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
+	</div>
+
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Destination:</span>
+		</div>
+		<input type="text" id="dstField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
+	</div>
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">UpdateID:</span>
+		</div>
+		<input type="text" id="uIDField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
+	</div>
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Payload:</span>
+		</div>
+		<textarea id="payloadField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""></textarea><br>
+	</div>
+		<!-- Source:  <input type="text" id="srcField" value="" readonly="" size="45">  -->
+		<!-- Destination: <input type="text" id="dstField" value="" readonly="" size="45"><br> -->
+		<!-- UpdateID: <input type="text" id="uIDField" value="" readonly="" size="70"> <br> -->
+		<!-- Payload: <textarea id="payloadField" readonly=""></textarea> -->
+	
+</div>
+</div>
+<div class="card text-center mt-5" padding-top:"50px;" style="width: 60rem;">
+<div class="card-header">
+<h3>Create a record</h3>
+</div>
+<div id="recordDiv">
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Destination:</span>
+		</div>
+		<input type="text" id="dstField2" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"><br>
+	</div>
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">UpdateID:</span>
+		</div>
+		<input type="text" id="uIDField2" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"><br>
+	</div>
+		<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Payload:</span>
+		</div>
+		<textarea id="payloadField2" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></textarea><br>
+	</div>
+	<!-- Destination: <input type="text" id="dstField" value=""  size="45"><br> -->
+<!-- 	UpdateID: <input type="text" id="uIDField" value="" size="70"> <br>
+	Payload: <br><textarea id="payloadField"></textarea> <br> -->
+	<a href="#" class="btn btn-primary" onclick="addRecord()">Submit Transaction</a>
+	<!-- <input type="submit" onclick="addRecord()" value="Submit Transaction"> -->
+</div>
+</div>
+<div id="resultDiv" hidden="" class="card alert-dark text-center mt-1" style="width: 60rem;">
+	<div class="card-header">
+		<h5 class="alert-heading">Transaction submitted</h5>
+	</div>
+	<div class="input-group mb3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 9rem;">Transaction ID:</span>
+		</div>
+		<a id="txIDField" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"></a><br>
+	</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+

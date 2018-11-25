@@ -13,14 +13,14 @@ api = Api(app)
 class Rank(Resource):
     def get(self, pub_key):
         conn = db_connect.connect()
-        query = conn.execute("SELECT pubkey, rank FROM rank WHERE pub_key = '%s'" % pub_key)
-        result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
+        query = conn.execute("SELECT pub_key, rank FROM rank WHERE pub_key = '%s'" % pub_key)
+        result = {'data': [dict(zip(tuple(query.keys()) ,i)) for i in query.cursor]}
         return jsonify(result)
 
 class Ranks(Resource):
     def get(self):
         conn = db_connect.connect()
-        query = conn.execute("SELECT pubkey, rank FROM rank")
+        query = conn.execute("SELECT pub_key, rank FROM rank")
         result = {'data':[dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
         return jsonify(result)
 
@@ -40,8 +40,8 @@ class ATRanks(Resource):
 
 api.add_resource(Rank, '/ranks/<pub_key>')
 api.add_resource(Ranks, '/ranks/')
-api.add_resource(Ranks, '/atrank/<pub_key>')
-api.add_resource(Ranks, '/atranks/')
+api.add_resource(ATRank, '/atranks/<pub_key>')
+api.add_resource(ATRanks, '/atranks/')
 
 if __name__ == '__main__':
      app.run(port='5002')

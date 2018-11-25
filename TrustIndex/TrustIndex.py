@@ -9,21 +9,6 @@ from web3 import Web3, HTTPProvider
 
 defaultUID = '0000000000000000000000000000000000000000000000000000000000000000'
 
-"""
-
-Description:
-Record class adds the ability to create objects of each record that has been recorded 
-on the smart contract
-
-Inputs:
-Initialisation takes all input fields that has been specified in documentation as well as 
-an extra variable for chain length
-
-Outputs:
-Creates record object or returns string of fields and it's corresponding variables
-
-"""
-
 class Record:
 	def __init__(self, timestamp, txid, source, destination, updateid, payload, chain):
 		self.timestamp = timestamp
@@ -36,21 +21,6 @@ class Record:
 
 	def toString(self):
 		return("Timestamp: {0} - TXID: {1} - Source: {2} Destination: {3} - Updateid: {4} - Payload: {5} - Chain: {6}".format(self.timestamp, self.txid, self.source, self.destination, self.updateid, self.payload, self.chain))
-
-"""
-
-Description:
-This function will populate all record objects recorded on the smart contract and store it into
-a list which is of type <Record>.
-
-Inputs:
-The function requires the list of all the Record IDs given by the smart contract
-
-Outputs:
-Returns two lists, one is all objects returned from the smart contract and the other list of all the record IDs 
-that have updated transaction
-
-"""
 
 def PopulateRecordList(IDList, contract):
 	RecordList = list()
@@ -65,20 +35,6 @@ def PopulateRecordList(IDList, contract):
 				UpdateIDList.append(result[3].hex())
 	return (RecordList, UpdateIDList)
 
-
-"""
-
-Description:
-Removes all old records that have been updated
-
-Inputs:
-Record list, List of all record ids that have been updated
-
-Outputs:
-Returns a list of record objects with all updated objects removed 
-
-"""
-
 def RemoveOldRecords(RecordList, UpdateIDList):
 	RecordList, chainHash, timestampHash = InitialRemoveRecords(RecordList, UpdateIDList)
 	if(len(chainHash) + len(timestampHash) != 0):
@@ -89,13 +45,11 @@ def InitialRemoveRecords(RecordList, UpdateIDList, chainHash = {}, timestampHash
 	tempList = list(RecordList)
 	for x, record in enumerate(RecordList):
 		if record.txid in UpdateIDList:
-			condition = False
 			if(record.updateid != defaultUID):
 				highestChain, oldest = UpdateIDs(record.txid, record.updateid, record.chain, tempList)
 				chainHash[record.updateid] = highestChain
 				timestampHash[record.updateid] = oldest
-				condition = True
-			if condition == False: 
+			else: 
 				chainHash[record.txid] = record.chain 
 				timestampHash[record.txid] = record.timestamp
 			tempList.pop(x - offset)
@@ -122,19 +76,6 @@ def UpdateIDs(oldUID, newUID, chain, RecordList):
 	return highestChain, oldest
 
 
-"""
-
-Description:
-Initalises and populates a networkx directed graph
-
-Inputs:
-List of all records (after updated transactions removed)
-
-Outputs:
-Returns directed graph object with all nodes populated
-
-"""
-
 def initGraph(RecordList):
 	G = nx.DiGraph()
 	for record in RecordList:
@@ -150,19 +91,6 @@ def initAntiTrustGraph(RecordList, PayloadID, AuthorityNodeList):
 		else:
 			G.add_edge(str(record.source), str(record.destination))	
 	return G, markedNodes
-
-"""
-
-Description:
-This function will return all in degrees 
-
-Inputs:
-Populated directed graph object, List of all page ranked nodes, target node public address
-
-Outputs:
-Returns a list of all indegrees of a target node
-
-"""
 
 def InDegreeList(G,	PRList, keyNode):
 	inDegreeList = list()
