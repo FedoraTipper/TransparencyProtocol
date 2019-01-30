@@ -1,5 +1,6 @@
 <script language="javascript" type="text/javascript" src="web3.min.js"></script>
 <script language="javascript" type="text/javascript" src="functions.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <link rel="stylesheet" href="bootstrap.css">
 
 
@@ -8,7 +9,13 @@
 <div class="container-fluid justify-content-center mt-5">
 <div class="row">
 <div class="col-lg xr-100">
-<div class="card text-center" style="width: 40rem;">
+	<div class="card text-center mb-3" style="width: 40rem;">
+		<div class="card-header">
+			<h4>Current Public Key</h4>
+		</div>
+		<a id="pubkeyField" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""></a>
+	</div>
+<div class="card text-center mb-1" style="width: 40rem;">
 <div class="card-header">
 	<h3>Record List</h3>
 </div>
@@ -37,14 +44,22 @@
 		<div class="input-group-prepend">
 			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Source:</span>
 		</div>
-		<input type="text" id="srcField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
+		<input type="text" id="srcField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly="">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Rank:</span>
+		</div>
+		<input type="text" id="srcRankField" value="" class="" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
 	</div>
 
 	<div class="input-group mb3">
 		<div class="input-group-prepend">
 			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Destination:</span>
 		</div>
-		<input type="text" id="dstField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
+		<input type="text" id="dstField" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly="">
+				<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default" style="width: 7rem;">Rank:</span>
+		</div>
+		<input type="text" id="dstRankField" value="" class="" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" readonly=""><br>
 	</div>
 	<div class="input-group mb3">
 		<div class="input-group-prepend">

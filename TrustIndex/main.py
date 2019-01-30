@@ -18,8 +18,8 @@ contract = w3.eth.contract(
 
 def main(ATR, PayloadID, seconds = 300):
 	previous = 0
-	TotalRecords = contract.functions.getRecordNumber()
 	while(1):
+		TotalRecords = contract.functions.getRecordNumber()
 		if previous != TotalRecords:
 			print("%s - Starting update" % datetime.now().strftime('%m-%d %H:%M:%S')) 
 			UpdateRecords(ATR, PayloadID)
@@ -52,11 +52,6 @@ def UpdateRecords(ATR, PayloadID):
 		rankHash = sorted(rankHash.items(), key=lambda x: x[1])
 		TI.SaveRanks(rankHash, 0)
 		print(rankHash)
-
-	#TI.SaveRanks(sorted_items, "rank")
-
-	# nx.draw(G, with_labels=True)
-	# plt.savefig("./network.png")
 
 def mergeHash(rankHash, ATRankHash, markedNodes):
 	merge = [[None for y in range(4)] for x in range(len(ATRankHash))]
